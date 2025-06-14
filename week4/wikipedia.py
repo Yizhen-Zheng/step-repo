@@ -66,6 +66,15 @@ class Wikipedia:
             self.links = data['links']
         print("Loaded from cache successfully!")
 
+    def find_id_by_title(self, target_title):
+        '''
+        input: the page title 
+        return: page id of that page
+        '''
+        pageid = [id for id, title in self.titles.items() if title ==
+                  target_title]
+        return pageid[0] if len(pageid) else -1
+
     def find_longest_titles(self):
         '''Example: Find the longest titles.'''
         titles = sorted(self.titles.values(), key=len, reverse=True)
@@ -104,30 +113,43 @@ class Wikipedia:
         '''
         'start': A title of the start page.
         'goal': A title of the goal page.
-
         '''
-        pages = collections.deque([start])
-        while len(pages):
-            current_page = pages.popleft()
-        pass
 
-    # Homework #2: Calculate the page ranks and print the most popular pages.
+        start_id = self.find_id_by_title(start)
+        goal_id = self.find_id_by_title(goal)
+
+        pages = collections.deque([start_id])
+        visited = {start_id: 0}
+
+        while len(pages):
+            current_pageid = pages.popleft()
+
+            current_step_count = visited[current_pageid]
+            if current_pageid == goal_id:
+                return current_step_count
+            neighbors = self.links[current_pageid]
+            for neighbor in neighbors:
+                if not neighbor in visited:
+                    pages.append(neighbor)
+                    visited[neighbor] = current_step_count+1
+
+        return -1
 
     def find_most_popular_pages(self):
-        # ------------------------#
-        # Write your code here!  #
-        # ------------------------#
+        '''
+        Homework #2: Calculate the page ranks and print the most popular pages.
+
+        '''
         pass
 
-    # Homework #3 (optional):
-    # Search the longest path with heuristics.
-    # 'start': A title of the start page.
-    # 'goal': A title of the goal page.
-
     def find_longest_path(self, start, goal):
-        # ------------------------#
-        # Write your code here!  #
-        # ------------------------#
+        '''
+        Homework #3 (optional):
+        Search the longest path with heuristics.
+        'start': A title of the start page.
+        'goal': A title of the goal page.
+
+        '''
         pass
 
     # Helper function for Homework #3:
@@ -148,21 +170,25 @@ class Wikipedia:
             assert (path[i + 1] in self.links[path[i]])
 
 
+PATHS = [('./wikipedia_dataset/pages_small.txt', './wikipedia_dataset/links_small.txt', 'wikipedia_s.pkl'), ('./wikipedia_dataset/pages_medium.txt', './wikipedia_dataset/links_medium.txt', 'wikipedia_m.pkl'), ('./wikipedia_dataset/pages_large.txt',
+                                                                                                                                                                                                                  './wikipedia_dataset/links_large.txt', 'wikipedia_l.pkl')]
+
+
 if __name__ == "__main__":
-    PATHS = [('./wikipedia_dataset/pages_small.txt', './wikipedia_dataset/links_small.txt', 'wikipedia_s.pkl'), ('./wikipedia_dataset/pages_medium.txt', './wikipedia_dataset/links_medium.txt', 'wikipedia_m.pkl'), ('./wikipedia_dataset/pages_large.txt',
-                                                                                                                                                                                                                      './wikipedia_dataset/links_large.txt', 'wikipedia_l.pkl')]
     if len(sys.argv) != 2:
         print("usage: %s pages_file links_file" % sys.argv[0])
         exit(1)
-    # hanlde invalid input
-    choice = int(sys.argv[1])
+    print('please select which dataset you want to use', end='\n')
+    choice = int(input().strip())
     data_path = PATHS[choice]
     wikipedia = Wikipedia(data_path[0], data_path[1], data_path[2])
     # examples
-    wikipedia.find_longest_titles()
-    wikipedia.find_most_linked_pages()
+    # wikipedia.find_longest_titles()
+    # wikipedia.find_most_linked_pages()
+
     # Homework #1
     wikipedia.find_shortest_path("渋谷", "パレートの法則")
+    # wikipedia.find_shortest_path("渋谷", "パレートの法則")
     # Homework #2
     wikipedia.find_most_popular_pages()
     # Homework #3 (optional)
