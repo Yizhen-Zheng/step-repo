@@ -1,1 +1,6 @@
 .DS_Store
+wikipedia_dataset/
+.pkl
+week4/wikipedia_s.pkl
+week4/wikipedia_m.pkl
+week4/wikipedia_l.pkl

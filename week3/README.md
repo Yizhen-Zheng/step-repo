@@ -76,9 +76,14 @@ the idea is like this
 
 # better ways :
 
-- use a stack
+- use a stack()
 - handle parentheses with recursive without a entry unpack?
-- ...
+- An RPN (Reverse Polish Notation) calculator uses a stack-based system where operators follow operands, unlike the traditional algebraic notation. It is also known as postfix notation.
+
+  ### Assignment review
+
+  - write test for specific function as well
+  - Reverse Polish Notation
 
 #### minor topics:
 
