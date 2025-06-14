@@ -2,12 +2,13 @@ import sys
 import collections
 import pickle
 import os
+import sqlite3
 
 
 class Wikipedia:
 
     # Initialize the graph of pages.
-    def __init__(self, pages_file, links_file, cache_file='wikipedia_cache'):
+    def __init__(self, dataset_size='small'):
         '''
         path: starts with cd into ./week4
         self.pages_file: path to page ID to page title 
@@ -21,6 +22,17 @@ class Wikipedia:
             A dict, whose key is page ID, value is a adj list of page links from the page.
             For example, self.links[1234] returns a list contains all destination pages linked from page[1234]
         '''
+        file_path = {
+            'small': ('wikipedia_dataset/pages_small.txt', 'wikipedia_dataset/links_small.txt', 'wikipedia_s.pkl'),
+            'medium': ('wikipedia_dataset/pages_medium.txt', 'wikipedia_dataset/links_medium.txt', 'wikipedia_m.pkl'),
+            'large': ('wikipedia_dataset/pages_large.txt', 'wikipedia_dataset/links_large.txt', 'wikipedia_l.pkl')
+        }
+        if dataset_size not in file_path:
+            raise ValueError(
+                f"Invalid dataset size '{dataset_size}'. Please use 'small', 'medium', or 'large'.")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        pages_file, links_file, cache_file = [
+            os.path.join(base_dir, e) for e in file_path[dataset_size]]
 
         self.pages_file = pages_file
         self.links_file = links_file
@@ -28,6 +40,9 @@ class Wikipedia:
 
         self.titles = {}
         self.links = {}
+        self.page_rank = {}
+        self.THRESHOLD = 0.01
+        self.DAMPING = 0.85
 
         if os.path.exists(cache_file):
             print(f'loading from cache: {cache_file}')
@@ -36,6 +51,9 @@ class Wikipedia:
             print("Cache not found, reading from text files...")
             self._read_files()
             self._save_to_cache()
+
+        for id, t in self.titles.items():
+            self.page_rank[id] = 1
 
     def _read_files(self):
         with open(self.pages_file) as file:
@@ -73,7 +91,11 @@ class Wikipedia:
         '''
         pageid = [id for id, title in self.titles.items() if title ==
                   target_title]
-        return pageid[0] if len(pageid) else -1
+        if not len(pageid):
+            print(
+                f'page not found: {target_title}\nplease change dataset size or change title')
+            return -1
+        return pageid[0]
 
     def find_longest_titles(self):
         '''Example: Find the longest titles.'''
@@ -114,7 +136,6 @@ class Wikipedia:
         'start': A title of the start page.
         'goal': A title of the goal page.
         '''
-
         start_id = self.find_id_by_title(start)
         goal_id = self.find_id_by_title(goal)
 
@@ -123,7 +144,6 @@ class Wikipedia:
 
         while len(pages):
             current_pageid = pages.popleft()
-
             current_step_count = visited[current_pageid]
             if current_pageid == goal_id:
                 return current_step_count
@@ -138,9 +158,43 @@ class Wikipedia:
     def find_most_popular_pages(self):
         '''
         Homework #2: Calculate the page ranks and print the most popular pages.
-
         '''
-        pass
+        # iterate
+        remain_factor = 1-self.DAMPING
+        damping_factor = self.DAMPING
+
+        converged = False
+        while not converged:
+            new_page_rank = {}
+            for id, t in self.titles.items():
+                new_page_rank[id] = 0
+            total_score_to_damp = 0
+            for id, t in self.titles.items():
+                current_rank = self.page_rank[id]
+                neighbors = self.links[id]
+                total_score_to_damp += remain_factor * current_rank
+                for neighbor in neighbors:
+                    new_page_rank[neighbor] += damping_factor * \
+                        current_rank/len(neighbors)
+            total_score_to_damp /= len(new_page_rank)
+            for id, page_score in new_page_rank.items():
+                new_page_rank[id] += total_score_to_damp
+            converged = self._is_converged(new_page_rank)
+            self.page_rank = new_page_rank
+        # find top 10 pages
+        top_pages = list(self.page_rank.items()).sort(
+            key=lambda page: page[1], reverse=True)
+
+    def _is_converged(self, new_page_rank: dict):
+        '''
+        compare self.page_rank with new_page_rank
+        '''
+        sum_squared_difference = 0
+        for pageid, new_score in new_page_rank.items():
+            old_score = self.page_rank[pageid]
+            sum_squared_difference += pow(new_score-old_score, 2)
+        print(sum_squared_difference)
+        return sum_squared_difference < self.THRESHOLD
 
     def find_longest_path(self, start, goal):
         '''
@@ -170,26 +224,19 @@ class Wikipedia:
             assert (path[i + 1] in self.links[path[i]])
 
 
-PATHS = [('./wikipedia_dataset/pages_small.txt', './wikipedia_dataset/links_small.txt', 'wikipedia_s.pkl'), ('./wikipedia_dataset/pages_medium.txt', './wikipedia_dataset/links_medium.txt', 'wikipedia_m.pkl'), ('./wikipedia_dataset/pages_large.txt',
-                                                                                                                                                                                                                  './wikipedia_dataset/links_large.txt', 'wikipedia_l.pkl')]
-
-
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("usage: %s pages_file links_file" % sys.argv[0])
-        exit(1)
+    '''
+    dataset_size: small, medium, large
+    '''
     print('please select which dataset you want to use', end='\n')
-    choice = int(input().strip())
-    data_path = PATHS[choice]
-    wikipedia = Wikipedia(data_path[0], data_path[1], data_path[2])
-    # examples
-    # wikipedia.find_longest_titles()
-    # wikipedia.find_most_linked_pages()
+    dataset_size = input().strip()
+    wikipedia = Wikipedia(dataset_size)
 
     # Homework #1
-    wikipedia.find_shortest_path("渋谷", "パレートの法則")
     # wikipedia.find_shortest_path("渋谷", "パレートの法則")
+    # r = wikipedia.find_shortest_path("渋谷", "新宿")
+    # print(r)
     # Homework #2
     wikipedia.find_most_popular_pages()
     # Homework #3 (optional)
-    wikipedia.find_longest_path("渋谷", "池袋")
+    # wikipedia.find_longest_path("渋谷", "池袋")
