@@ -144,6 +144,10 @@ adj listL
 #### 3: store pages into a DB, and divide the tasks
 
 - partition problem across multiple processes (currently, iterate 1000 time in medium takes 10s seconds)
+- we start with a way from start to goal.
+- for each node on the path, we try to extent it to the goal, see if we can form a path
+- if so, we store the path and score it
+- next time we choose the path with higher score and repeat above
 
 ---
 
