@@ -3,6 +3,7 @@
 ### performance:
 
 - tree: O(log N)
+- stable, predictable behaviour
 - hashtable: O(1)
 - hashtable has O(n) worst case (after research: this will cause unpredictable behaviour)(may lead to poor user experience), compare to stable behaviour of tree.
 - space efficiency: tree does'n need extra spaces, while hashtable require extra space that corresponding to the database scale. This may cause a great amout of space waste for larger database
@@ -25,3 +26,7 @@
 
 - tree can handle multiple concurrent operation
 - rehash will lock the whole structure
+
+### hot node issue
+
+both tree and hash table will face hot nodes

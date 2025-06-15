@@ -104,3 +104,7 @@ def move_to_head(self, exist_node: Node) -> tuple[Node, bool]:
 ## memory leak:
 
 - when droping the tail, we should remove a node from both hash table and linked list
+
+## choose hash function:
+
+- choose efficient hash function by use case (sha256 is expensive for non security task)

@@ -2,7 +2,7 @@
 
 implement hashtable data structure and a least-recently-used cache from scratch using list and doubly linked lists in Python.
 
-## project Structure
+## Structure
 
 ```
 ├── README.md                     # This file
@@ -14,13 +14,7 @@ implement hashtable data structure and a least-recently-used cache from scratch 
 └── broccoli.my                   # A sliding window algorithm quiz
 ```
 
-## project overview
-
-**Key Features:**
-
-- **O(1) access time** for cache operations (get, put, update)
-- **O(1) eviction** of least recently used items
-- **dynamic hash table** with automatic resizing
+## overview
 
 **Hash Table Performance:**
 
@@ -28,11 +22,9 @@ implement hashtable data structure and a least-recently-used cache from scratch 
 - Worst case: O(n) during rehashing (amortized O(1))
 - Load factor: 0.3 - 0.7 for optimal performance
 
-## nown Issues
+### code review:
 
-1. **Pointer Logic**: Current implementation has backwards linked list pointers
-2. **Memory Leaks**: Hash table cleanup missing during eviction
-3. **Edge Cases**: Missing null pointer checks in some methods
+-
 
 > Note:
 > Those marked which 'after research' or similar words are implemented after look up resources
