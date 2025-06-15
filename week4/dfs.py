@@ -119,32 +119,28 @@ def dfs_with_stack_in_the_recursion_order(start, goal):
         print("Not found")
 
 
-def dfs_with_stack_in_the_recursion_order2(start, goal):
+def optimized_dfs_with_stack_in_the_recursion_order(start, goal):
     '''optimized version'''
     print("dfs_with_stack_in_the_recursion_order without nested double end queue:")
     # (node,path)
-    stack = [(start, [start])]
+    stack = [start]
     visited = {start}
     previous = {}
     previous[start] = None
 
-    path_found = []
     while stack:
-        (current_node, path) = stack.pop()
+        current_node = stack.pop()
         print(current_node)
         visited.add(current_node)
         if current_node == goal:
-            path_found = path
             break
         for neighbor in reversed(links.get(current_node, [])):
             if neighbor not in visited:
-                new_path = path[:]
-                new_path.append(neighbor)
-                stack.append((neighbor, new_path))
+                stack.append(neighbor)
                 previous[neighbor] = current_node
 
     print(" -> ".join(find_path(goal, previous)))
-    if goal in path_found:
+    if goal in previous:
         print('goal found')
     else:
         print('not found')
@@ -154,4 +150,4 @@ def dfs_with_stack_in_the_recursion_order2(start, goal):
 dfs_with_recursion("A", "F")
 dfs_with_stack("A", "F")
 dfs_with_stack_in_the_recursion_order("A", "F")
-dfs_with_stack_in_the_recursion_order2("A", "F")
+optimized_dfs_with_stack_in_the_recursion_order("A", "F")

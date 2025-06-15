@@ -104,30 +104,6 @@ class Wikipedia:
             return -1
         return pageid[0]
 
-    def find_shortest_path(self, start, goal):
-        '''
-        'start': A title of the start page.
-        'goal': A title of the goal page.
-        '''
-        start_id = self.find_id_by_title(start)
-        goal_id = self.find_id_by_title(goal)
-
-        pages = collections.deque([start_id])
-        visited = {start_id: 0}
-
-        while len(pages):
-            current_pageid = pages.popleft()
-            current_step_count = visited[current_pageid]
-            if current_pageid == goal_id:
-                return current_step_count
-            neighbors = self.links[current_pageid]
-            for neighbor in neighbors:
-                if not neighbor in visited:
-                    pages.append(neighbor)
-                    visited[neighbor] = current_step_count+1
-
-        return -1
-
     def _find_reachable_to(self, goal_id):
         '''detect all pages that can reach goal'''
         visited = {goal_id}
@@ -184,7 +160,8 @@ class Wikipedia:
         '''
         start_id = self.find_id_by_title(start)
         goal_id = self.find_id_by_title(goal)
-        self._prepare_longest_path(start_id, goal_id)
+        # the prepare to remove unused pages
+        # self._prepare_longest_path(start_id, goal_id)
         longest_path = []
         iteration_count = 0
         # (current node, current path, current visited)
