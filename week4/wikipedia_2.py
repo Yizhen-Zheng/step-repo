@@ -23,27 +23,30 @@ class Wikipedia:
             For example, self.links[1234] returns a list contains all destination pages linked from page[1234]
         '''
         file_path = {
-            'small': ('wikipedia_dataset/pages_small.txt', 'wikipedia_dataset/links_small.txt', 'wikipedia_s.pkl'),
-            'medium': ('wikipedia_dataset/pages_medium.txt', 'wikipedia_dataset/links_medium.txt', 'wikipedia_m.pkl'),
-            'large': ('wikipedia_dataset/pages_large.txt', 'wikipedia_dataset/links_large.txt', 'wikipedia_l.pkl')
+            'small': ('wikipedia_dataset/pages_small.txt', 'wikipedia_dataset/links_small.txt', 'wikipedia_s.pkl', 'relevant_pages_s.pkl'),
+            'medium': ('wikipedia_dataset/pages_medium.txt', 'wikipedia_dataset/links_medium.txt', 'wikipedia_m.pkl', 'relevant_pages_m.pkl'),
+            'large': ('wikipedia_dataset/pages_large.txt', 'wikipedia_dataset/links_large.txt', 'wikipedia_l.pkl', 'relevant_pages_l.pkl')
         }
         if dataset_size not in file_path:
             raise ValueError(
                 f"Invalid dataset size '{dataset_size}'. Please use 'small', 'medium', or 'large'.")
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        pages_file, links_file, cache_file = [
+        pages_file, links_file, cache_file, relevant_pages_file = [
             os.path.join(base_dir, e) for e in file_path[dataset_size]]
 
         self.pages_file = pages_file
         self.links_file = links_file
         self.cache_file = cache_file
+        self.relevant_pages_file = relevant_pages_file
 
         self.titles = {}
         self.links = {}
-        self.page_rank = {}
+        self.links_reversed = collections.defaultdict(list)
+        self.relevant_pages = set()
         self.THRESHOLD = 0.01
         self.DAMPING = 0.85
 
+        # if False:
         if os.path.exists(cache_file):
             print(f'loading from cache: {cache_file}')
             self._load_from_cache()
@@ -51,9 +54,6 @@ class Wikipedia:
             print("Cache not found, reading from text files...")
             self._read_files()
             self._save_to_cache()
-
-        for id, t in self.titles.items():
-            self.page_rank[id] = 1
 
     def _read_files(self):
         with open(self.pages_file) as file:
@@ -69,12 +69,18 @@ class Wikipedia:
                 (src, dst) = line.rstrip().split(" ")
                 (src, dst) = (int(src), int(dst))
                 self.links[src].append(dst)
+
+        # initialize reversed links (store pages as {dst:[srcs]})
+        for src, dsts in self.links.items():
+            for dst in dsts:
+                self.links_reversed[dst].append(src)
+
         print("Finished reading %s" % self.links_file)
 
     def _save_to_cache(self):
         print("Saving to cache...")
         with open(self.cache_file, 'wb') as f:
-            pickle.dump({'titles': self.titles, 'links': self.links}, f)
+            pickle.dump({'titles': self.titles, 'links': self.links, 'links_reversed': self.links_reversed}, f)
         print("Cache saved!")
 
     def _load_from_cache(self):
@@ -82,6 +88,7 @@ class Wikipedia:
             data = pickle.load(f)
             self.titles = data['titles']
             self.links = data['links']
+            self.links_reversed = data['links_reversed']
         print("Loaded from cache successfully!")
 
     def find_id_by_title(self, target_title):
@@ -96,40 +103,6 @@ class Wikipedia:
                 f'page not found: {target_title}\nplease change dataset size or change title')
             return -1
         return pageid[0]
-
-    def find_longest_titles(self):
-        '''Example: Find the longest titles.'''
-        titles = sorted(self.titles.values(), key=len, reverse=True)
-        print("The longest titles are:")
-        count = 0
-        index = 0
-        while count < 15 and index < len(titles):
-            if titles[index].find("_") == -1:
-                print(titles[index])
-                count += 1
-            index += 1
-        print()
-
-    def find_most_linked_pages(self):
-        '''
-        Example: Find the most linked pages.
-        loops all links, count how many time the page is linked from others
-        O(E)
-        '''
-        link_count = {}
-        for id in self.titles.keys():
-            link_count[id] = 0
-
-        for id in self.titles.keys():
-            for dst in self.links[id]:
-                link_count[dst] += 1
-
-        print("The most linked pages are:")
-        link_count_max = max(link_count.values())
-        for dst in link_count.keys():
-            if link_count[dst] == link_count_max:
-                print(self.titles[dst], link_count_max)
-        print()
 
     def find_shortest_path(self, start, goal):
         '''
@@ -155,80 +128,125 @@ class Wikipedia:
 
         return -1
 
-    def find_most_popular_pages(self):
-        '''
-        Homework #2: Calculate the page ranks and print the most popular pages.
-        iterative update self.page_rank untile it converged 
-        O(n*(N+E)) n is the iterate time
-        '''
-        # iterate update the prage rank
-        remain_factor = 1-self.DAMPING
-        damping_factor = self.DAMPING
+    def _find_reachable_to(self, goal_id):
+        '''detect all pages that can reach goal'''
+        visited = {goal_id}
+        queue = collections.deque([goal_id])
 
-        converged = False
-        while not converged:
-            # initialize new empty page rank
-            new_page_rank = {}
-            for id, t in self.titles.items():
-                new_page_rank[id] = 0
-            total_score_to_damp = 0
-            for id, t in self.titles.items():
-                current_rank = self.page_rank[id]
-                neighbors = self.links[id]
-                total_score_to_damp += remain_factor * current_rank
-                for neighbor in neighbors:
-                    new_page_rank[neighbor] += damping_factor * current_rank/len(neighbors)
-            total_score_to_damp /= len(new_page_rank)
-            for id, page_score in new_page_rank.items():
-                new_page_rank[id] += total_score_to_damp
-            converged = self._is_converged(new_page_rank)
-            self.page_rank = new_page_rank
-        # find top 10 pages
-        top_pages = list(self.page_rank.items())
-        top_pages = sorted(top_pages, key=lambda page: page[1], reverse=True)[:11]
-        return top_pages
+        while queue:
+            current = queue.popleft()
+            for src in self.links_reversed[current]:
+                if src not in visited:
+                    queue.append(src)
+                    visited.add(src)
+        return visited
 
-    def _is_converged(self, new_page_rank: dict):
-        '''
-        compare self.page_rank with new_page_rank
-        '''
-        sum_squared_difference = 0
-        for pageid, new_score in new_page_rank.items():
-            old_score = self.page_rank[pageid]
-            sum_squared_difference += pow(new_score-old_score, 2)
-        print(sum_squared_difference)
-        return sum_squared_difference < self.THRESHOLD
+    def _find_reachable_from(self, start_id):
+        '''detect all pages that can be reached from start'''
+        visited = {start_id}
+        queue = collections.deque([start_id])
+        while queue:
+            current = queue.popleft()
+            # since dict self.link has been already write into pkl, i used get with defaul value
+            for dst in self.links.get(current, []):
+                if dst not in visited:
+                    queue.append(dst)
+                    visited.add(dst)
 
-    def find_longest_path(self, start, goal):
+        return visited
+
+    def _prepare_longest_path(self, start_id, goal_id):
         '''
-        Homework #3 (optional):
+        replace self.links with cleaned pages(remove dead end). doesn't effect much (reduce about 1/5 irrelevant pages) '''
+        print(self.relevant_pages)
+        if os.path.exists(self.relevant_pages_file):
+            print(f'loading from cache: {self.relevant_pages_file}')
+            with open(self.relevant_pages_file, 'rb') as f:
+                data = pickle.load(f)
+                self.relevant_pages = data['relevant_pages']
+        else:
+            reachable_to_goal = self._find_reachable_to(goal_id)
+            reachable_from_start = self._find_reachable_from(start_id)
+            relevant_pages = reachable_to_goal & reachable_from_start
+            with open(self.relevant_pages_file, 'wb')as f:
+                pickle.dump({'relevant_pages': relevant_pages}, f)
+        print(len(self.relevant_pages), '/', len(self.links))
+        self.links = {key: value for key, value in self.links.items() if key in self.relevant_pages}
+        return
+
+    def find_longest_path_1(self, start, goal):
+        '''
         Search the longest path with heuristics.
         'start': A title of the start page.
         'goal': A title of the goal page.
+        it works for samll, and take too much memory for medium that havn't seen result
+        there should be ways to reduce memory usage
         '''
         start_id = self.find_id_by_title(start)
         goal_id = self.find_id_by_title(goal)
-        # store visited nodes by 'nth step', so node A can exist on 1th step, and 6th step in another path
-        # DFS traverse to find
-        #
-        path = []
-        while len(path) < 1000:
-            visited = {start_id: 0}
-            pages = [start_id]
-            idx = 0
-            new_path = []
-            while idx < len(pages):
-                current_pageid = pages.popleft()
-                current_step_count = visited[current_pageid]
-                if current_pageid == goal_id:
-                    break
-                neighbors = self.links[current_pageid]
-                for neighbor in neighbors:
-                    if not neighbor in visited:
-                        pages.append(neighbor)
-                        visited[neighbor] = current_step_count+1
-                idx += 1
-            print(len(new_path), '\n', new_path)
+        self._prepare_longest_path(start_id, goal_id)
+        longest_path = []
+        iteration_count = 0
+        # (current node, current path, current visited)
+        stack = [(start_id, [start_id], {start_id})]
+        while stack:
+            iteration_count += 1
+            if iteration_count % 1000 == 0:
+                print(f'iterations:{iteration_count}\nStack size: {len(stack)}\nLongest path:{len(longest_path)} ')
+            current, path, visited = stack.pop()
+
+            if current == goal_id:
+                if len(path) > len(longest_path):
+                    longest_path = path
+                    print(f'new longest: {len(longest_path)}')
+                continue
+            for neighbor in reversed(self.links.get(current, [])):
+                if neighbor not in visited:
+                    new_visited = visited.copy()
+                    new_visited.add(neighbor)
+                    stack.append((neighbor, path+[neighbor], new_visited))
+
+        return longest_path
+
+    def find_longest_path_2(self, start, goal):
+        '''
+        random walk, longest find in medium: 1709. doesn't work well
+        '''
+        start_id = self.find_id_by_title(start)
+        goal_id = self.find_id_by_title(goal)
+        self._prepare_longest_path(start_id, goal_id)
+        longest_path = []
+
+        # (current node, current path, current visited)
+        for i in range(1000000):
+            if i % 1000 == 0:
+                print(f'{i} iterations, longest: {len(longest_path)}')
+            path = self.random_walk(start_id, goal_id)
+
+            if path:
+                if len(path) > len(longest_path):
+                    longest_path = path
+                    print(f'new longest:{len(path)}')
+                else:
+                    print(f'new path:{len(path)}')
+        return longest_path
+
+    def random_walk(self, start_id, goal_id):
+        import random
+        current = start_id
+        path = [start_id]
+        visited = {start_id}
+        for _ in range(495590):
+            if current == goal_id:
+                return path
+
+            neighbors = [n for n in self.links.get(current, []) if n not in visited]
+            if not neighbors:
+                return None
+            next_page = random.choice(neighbors)
+            path.append(next_page)
+            visited.add(next_page)
+            current = next_page
         return path
 
     def assert_path(self, path, start, goal):
@@ -250,19 +268,8 @@ class Wikipedia:
 
 
 if __name__ == "__main__":
-    '''
-    dataset_size: small, medium, large
-    '''
     print('please select which dataset you want to use', end='\n')
     dataset_size = input().strip()
     wikipedia = Wikipedia(dataset_size)
 
-    # Homework #1
-    # wikipedia.find_shortest_path("渋谷", "パレートの法則")
-    # r = wikipedia.find_shortest_path("渋谷", "新宿")
-    # print(r)
-    # Homework #2
-    r = wikipedia.find_most_popular_pages()
-    print(r)
-    # Homework #3 (optional)
     # wikipedia.find_longest_path("渋谷", "池袋")

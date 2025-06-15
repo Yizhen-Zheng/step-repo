@@ -81,15 +81,37 @@ def dfs_with_stack(start, goal):
 # Challenge quiz: Implement DFS using a stack that visits nodes and edges
 # in the same order as dfs_with_recursion. In other words, implement DFS that
 # finds A -> B -> C -> D -> E -> F first using a stack.
+
 def dfs_with_stack_in_the_recursion_order(start, goal):
+    '''over complexified version'''
     print("dfs_with_stack_in_the_recursion_order:")
     stack = collections.deque()
-    visited = {}
+    visited = {start}
     previous = {}
+    stack.append(collections.deque(start))
+    previous[start] = None
 
-    # ------------------------#
-    # Write your code here!  #
-    # ------------------------#
+    found = False
+    prev_memo = None
+    while stack and not found:
+        current_q = stack[-1]
+        # if find=True: compare path
+        while current_q:
+            node = current_q.popleft()
+            previous[node] = prev_memo
+            prev_memo = node
+            if node == goal:
+                found = True
+                break
+            new_q = collections.deque()
+            for child in links[node]:
+                if child not in visited:
+                    new_q.append(child)
+                    visited.add(child)
+            stack.append(new_q)
+            current_q = stack[-1]
+        stack.pop()
+    print(previous)
 
     if goal in previous:
         print(" -> ".join(find_path(goal, previous)))
@@ -97,6 +119,39 @@ def dfs_with_stack_in_the_recursion_order(start, goal):
         print("Not found")
 
 
+def dfs_with_stack_in_the_recursion_order2(start, goal):
+    '''optimized version'''
+    print("dfs_with_stack_in_the_recursion_order without nested double end queue:")
+    # (node,path)
+    stack = [(start, [start])]
+    visited = {start}
+    previous = {}
+    previous[start] = None
+
+    path_found = []
+    while stack:
+        (current_node, path) = stack.pop()
+        print(current_node)
+        visited.add(current_node)
+        if current_node == goal:
+            path_found = path
+            break
+        for neighbor in reversed(links.get(current_node, [])):
+            if neighbor not in visited:
+                new_path = path[:]
+                new_path.append(neighbor)
+                stack.append((neighbor, new_path))
+                previous[neighbor] = current_node
+
+    print(" -> ".join(find_path(goal, previous)))
+    if goal in path_found:
+        print('goal found')
+    else:
+        print('not found')
+    return
+
+
 dfs_with_recursion("A", "F")
 dfs_with_stack("A", "F")
 dfs_with_stack_in_the_recursion_order("A", "F")
+dfs_with_stack_in_the_recursion_order2("A", "F")
