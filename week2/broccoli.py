@@ -31,10 +31,11 @@ class Solution:
         return ans
 
 
-t1 = 'GWGWGWGGGGGWWWGGGGGGWGGWGGWWWWWGGWWWGWGWWGWWWGWWGWWWGGGGGWWWWGGGGWWWWG'
-t2 = 'WWWGG'
-t3 = 'GG'
-# ans = Solution().solution(t3)
-ans = Solution().solution(t1)
-# ans = 25
+# t = 'GWGWGWGGGGGWWWGGGGGGWGGWGGWWWWWGGWWWGWGWWGWWWGWWGWWWGGGGGWWWWGGGGWWWWG'
+# t = 'WWWGG'
+t = 'GG'
+# t = 'WW'
+
+ans = Solution().solution(t)
+
 print(ans)

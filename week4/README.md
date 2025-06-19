@@ -177,3 +177,10 @@ deepcopy: use copy.deepcopy
 ```
 
 iter: - my_iter=iter(iterable) returns an iterator obj - next(my_iter) - StopIteration when no more values
+
+##### PageRank initial value
+
+- the PageRank of a page represents the steady-state **probability** of this random surfer being on that particular page after a very long time.
+- this means, an initial value of each page begins with 1.0 will take much time to converge the total probability to 1
+- begin with 1.0/total_page_number: a uniform probability distribution. faster convergence because it starts closer to a valid probability distribution
+- normalized random initial value: similar to 1.0/total_page_number
