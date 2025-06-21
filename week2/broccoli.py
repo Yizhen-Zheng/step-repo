@@ -39,3 +39,10 @@ t = 'GG'
 ans = Solution().solution(t)
 
 print(ans)
+'''
+while idx<len and white-broccoli-left!=0
+(If only green broccoli, return 0 directly)
+If current is white,white broccoli left-=1, idx+=1
+If current is green,count +=1
+Return count
+'''

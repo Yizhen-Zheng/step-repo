@@ -1,6 +1,6 @@
 .DS_Store
 wikipedia_dataset/
-.pkl
+*.pkl
 week4/wikipedia_s.pkl
 week4/wikipedia_m.pkl
 week4/wikipedia_l.pkl
@@ -8,3 +8,5 @@ week4/wikipedia_l.pkl
 week4/relevant_pages_s.pkl
 week4/relevant_pages_m.pkl
 week4/relevant_pages_l.pkl
+
+*.csv

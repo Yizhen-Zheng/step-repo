@@ -121,6 +121,8 @@ adj listL
 - clique decision problem: does a size n clique exist in a graph?
 - clique optimization problem: what's the maximum size clique in a graph?
 
+- decision problem vs function problem
+
 ---
 
 - intuitive for find longest path (doesn't help much):
