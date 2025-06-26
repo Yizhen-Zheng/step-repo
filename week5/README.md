@@ -65,9 +65,31 @@
 
 ## reference:
 
+- [detect when to swap in 2-opt](https://en.wikipedia.org/wiki/2-opt)
 - [3-opt](https://github.com/ozanyerli/tsp3opt/blob/main/tsp3opt.c)
 - [3-2opt](https://www.cst.nihon-u.ac.jp/research/gakujutu/58/pdf/L-56.pdf)
 - [simulated annealing](http://youtube.com/watch?v=GiDsjIBOVoA&t=989s)
+- [Branch and bound](https://www.youtube.com/watch?v=1FEP_sNb62k)
+- [ILS](https://en.wikipedia.org/wiki/Iterated_local_search)
+
+## ideas:
+
+### 2-opt, 3-opt:
+
+for 3-opt:
+
+- 2 tours will share at least 2 edges (0 -> 1 and n-1 -> 0)
+- remove 2 edges that not share vertexes
+- handle degenerate cases
+- seems sensitive to float deviation(float 32 is not sufficient for square root )
+
+### Iterated local search:
+
+- haven't implemented
+
+### simulated annealing:
+
+- the params(cooling rate and initial temperature) seems significantly effect output
 
 ## others:
 
