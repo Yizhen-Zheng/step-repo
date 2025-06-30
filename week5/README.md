@@ -1,15 +1,5 @@
 ## concepts:
 
-## reference:
-
-- [2-opt](https://en.wikipedia.org/wiki/2-opt)
-- [3-opt](https://github.com/ozanyerli/tsp3opt/blob/main/tsp3opt.c)
-- [3-2opt](https://www.cst.nihon-u.ac.jp/research/gakujutu/58/pdf/L-56.pdf)
-- [simulated annealing](http://youtube.com/watch?v=GiDsjIBOVoA&t=989s)
-- [Branch and bound](https://www.youtube.com/watch?v=1FEP_sNb62k)
-- [Branch and bound](https://en.wikipedia.org/wiki/Branch_and_bound)
-- [ILS](https://en.wikipedia.org/wiki/Iterated_local_search)
-
 ## file structure:
 
 - solver_a: 2-opt
@@ -23,6 +13,10 @@
 - util: helper functions for calculating distance, making dist_matrix, spliting cities and merging local tours with greedy
 
 ### 2-opt, 3-opt:
+
+- [2-opt](https://en.wikipedia.org/wiki/2-opt)
+- [3-opt](https://github.com/ozanyerli/tsp3opt/blob/main/tsp3opt.c)
+- [3-2opt](https://www.cst.nihon-u.ac.jp/research/gakujutu/58/pdf/L-56.pdf)
 
 #### 2-opt:
 
@@ -52,9 +46,13 @@
 
 ### Iterated local search:
 
+- [ILS](https://en.wikipedia.org/wiki/Iterated_local_search)
+
 - haven't implemented
 
 ### simulated annealing:
+
+- [simulated annealing](http://youtube.com/watch?v=GiDsjIBOVoA&t=989s)
 
 - the params(cooling rate and initial temperature) seems significantly effect output
 - faster than 3-opt
@@ -65,8 +63,10 @@
 
 ### Branch and Bound
 
-- pruning: reduce the size of decision tree
+- [Branch and bound](https://www.youtube.com/watch?v=1FEP_sNb62k)
+- [Branch and bound](https://en.wikipedia.org/wiki/Branch_and_bound)
 
+- pruning: reduce the size of decision tree
 - reduce a matrix:
   - use a reduce matrix to find least needed cost
 - a branch will have a trie of instances(like subset/leave node)
@@ -80,15 +80,24 @@
 for the 1st node, there're N-1 choices(imagine a trie), at start point our initial cost is the 'least needed coast' we got from reducing
 
 - considering recursion depth limit, we can use stack with backtrace
+- also we can apply recursion version with city spliter, implement backtrace (store currently modified rows and columns and change them back after finishing recursion) to avoid deep copying matrixes for each child
+  - alternative way: use a set to represent sparse changings to implement backtrace, a bit more complex
+
+### Ant colony optimization algorithms
+
+- [ant colony optimization](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms)
+- idea: generate solution -> compare solutions -> update global state(pheronome)
+- from current city(i), probability of moving to next(j) P depends on: pheromone between i and j / sum of pheromone between i and all allowed cities
 
 ### for dataset with 8000 cities:
 
+idea sketch:
 if we hold a dist_matrix of float64 of size 8000x8000, that will be about 0.5 GB, and with BranchBound we're going to copy many of this.
 if split them into sub_dist_matrix, also we need to in some way keep the origin indexes in origin cities.
 intuitive idea:
 first make origin dist_matrix and put it into pkl, and remove from memory.
 then write cities into sub*cities*[nth] csv, each row has (origin_idx, x, y).
-then in a while loop, :
+then in a loop:
 read these sub_cities and make their own dist_matrix,
 then remove the sub*cities[nth] csv from memory, solve every of them with BB, and write it into a local_solution*[nth].csv, with local_idx,
 each time after finishing writing these local*solution*[nth].csv, we remove them from memory and go to read next sub_cities input and solve it.
@@ -105,7 +114,6 @@ syntax:
 - set: remove() or pop(): will have key error if key not exist
 - set: discard(): avoid such key error
 - google docs can insert code block
--
 
 ## interview technics
 
@@ -120,6 +128,8 @@ syntax:
 - variable / func name: self explanatory
 - make test case shorter
 - be care of pace (about 35 min time limit)
+
+how to run visualizer:
 
 ```shellsession
 python -m http.server # For Python 3
