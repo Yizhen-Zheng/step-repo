@@ -10,7 +10,17 @@
 - [Branch and bound](https://en.wikipedia.org/wiki/Branch_and_bound)
 - [ILS](https://en.wikipedia.org/wiki/Iterated_local_search)
 
-## ideas:
+## file structure:
+
+- solver_a: 2-opt
+- solver_b: 3-opt
+- solver_c: simulated annealing
+- solver_d: branch and bound - stack
+- solver_e: branch and bound - recursion, with back trace, city spliter
+- solver_f: 2-opt with city spliter and refine with 2-opt
+- city_manager: manage cache and reading, writing file when spliting cities
+- common: helper functions for reading input file, writing out put file, formatting output so on
+- util: helper functions for calculating distance, making dist_matrix, spliting cities and merging local tours with greedy
 
 ### 2-opt, 3-opt:
 
